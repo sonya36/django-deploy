@@ -1,16 +1,12 @@
 [Unit]
-Description=gunicorn daemon
+Description=gunicorn daemon for {{ app_name }}
 After=network.target
 
 [Service]
 User=ubuntu
 Group=www-data
 WorkingDirectory={{ project_dir }}
-
-ExecStart={{ venv_path }}/bin/gunicorn \
---workers 3 \
---bind 0.0.0.0:{{ gunicorn_port }} \
-{{ django_module }}
+ExecStart={{ venv_path }}/bin/gunicorn --workers 3 --bind 0.0.0.0:{{ gunicorn_port }} {{ django_module }}
 
 [Install]
 WantedBy=multi-user.target
