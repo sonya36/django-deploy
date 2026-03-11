@@ -52,11 +52,6 @@
     args:
       chdir: "{{ project_dir }}"
 
-  - name: Collect static
-    command: "{{ venv_path }}/bin/python manage.py collectstatic --noinput"
-    args:
-      chdir: "{{ project_dir }}"
-
   - name: Copy gunicorn service
     template:
       src: templates/gunicorn.service.j2
