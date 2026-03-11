@@ -4,6 +4,6 @@ repo_url: https://github.com/sonya36/django-app.git
 branch: main
 
 venv_path: /var/www/djangoapp/venv
-django_module: django_app.wsgi:application  # matches folder name after rename
+django_module: app.wsgi:application  # matches folder name after rename
 gunicorn_port: 8000
 domain_name: _
