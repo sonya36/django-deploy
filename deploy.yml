@@ -1,0 +1,91 @@
+- hosts: web
+  become: yes
+
+  vars_files:
+    - group_vars/web.yml
+
+  tasks:
+
+  - name: Update apt
+    apt:
+      update_cache: yes
+
+  - name: Install dependencies
+    apt:
+      name:
+        - python3
+        - python3-pip
+        - python3-venv
+        - git
+        - nginx
+      state: present
+
+  - name: Create project directory
+    file:
+      path: "{{ project_dir }}"
+      state: directory
+
+  - name: Clone repository
+    git:
+      repo: "{{ repo_url }}"
+      dest: "{{ project_dir }}"
+      version: "{{ branch }}"
+      force: yes
+
+  - name: Create virtual environment
+    command: python3 -m venv {{ venv_path }}
+    args:
+      creates: "{{ venv_path }}"
+
+  - name: Install requirements
+    pip:
+      requirements: "{{ project_dir }}/requirements.txt"
+      virtualenv: "{{ venv_path }}"
+
+  - name: Install gunicorn
+    pip:
+      name: gunicorn
+      virtualenv: "{{ venv_path }}"
+
+  - name: Run migrations
+    command: "{{ venv_path }}/bin/python manage.py migrate"
+    args:
+      chdir: "{{ project_dir }}"
+
+  - name: Collect static
+    command: "{{ venv_path }}/bin/python manage.py collectstatic --noinput"
+    args:
+      chdir: "{{ project_dir }}"
+
+  - name: Copy gunicorn service
+    template:
+      src: templates/gunicorn.service.j2
+      dest: /etc/systemd/system/gunicorn.service
+
+  - name: Start gunicorn
+    systemd:
+      name: gunicorn
+      state: started
+      enabled: yes
+      daemon_reload: yes
+
+  - name: Configure nginx
+    template:
+      src: templates/nginx.conf.j2
+      dest: /etc/nginx/sites-available/{{ app_name }}
+
+  - name: Enable nginx site
+    file:
+      src: /etc/nginx/sites-available/{{ app_name }}
+      dest: /etc/nginx/sites-enabled/{{ app_name }}
+      state: link
+
+  - name: Remove default nginx
+    file:
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+
+  - name: Restart nginx
+    service:
+      name: nginx
+      state: restarted

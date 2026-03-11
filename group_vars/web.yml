@@ -1,0 +1,13 @@
+app_name: djangoapp
+project_dir: /var/www/djangoapp
+
+repo_url: https://github.com/sonya36/django-app.git
+branch: main
+
+venv_path: /var/www/djangoapp/venv
+
+django_module: project.wsgi:application
+
+gunicorn_port: 8000
+
+domain_name: _
