@@ -1,5 +1,5 @@
 app_name: djangoapp
-project_dir: djangoapp       # relative name (inside /var/www)
+project_dir: /var/www/djangoapp       # relative name (inside /var/www)
 repo_url: https://github.com/sonya36/django-app.git
 branch: main
 
