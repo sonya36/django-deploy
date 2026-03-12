@@ -2,8 +2,8 @@ app_name: nodeapp
 
 project_dir: /opt/nodeapp
 
-repo_url: https://github.com/sonya36/nodeapp.git
+repo_url: https://github.com/sonya36/node-app.git
 branch: main
 
 node_port: 3000
-domain_name: node.example.com
+domain_name: _
