@@ -18,14 +18,14 @@
         - nginx
       state: present
 
-  - name: Install Node runtime
+  - name: Install Node.js runtime
     shell: |
       curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
       apt-get install -y nodejs
     args:
       executable: /bin/bash
 
-  - name: Install PM2
+  - name: Install PM2 globally
     npm:
       name: pm2
       global: yes
@@ -34,6 +34,9 @@
     file:
       path: "{{ project_dir }}"
       state: directory
+      owner: ubuntu
+      group: ubuntu
+      mode: "0755"
 
   - name: Clone repository
     git:
@@ -41,36 +44,41 @@
       dest: "{{ project_dir }}"
       version: "{{ branch }}"
       force: yes
+      update: yes
 
-  - name: Install node dependencies
+  - name: Install Node.js dependencies
     npm:
       path: "{{ project_dir }}"
 
-  - name: Start Node application
-    shell: pm2 start app.js --name {{ app_name }} || pm2 restart {{ app_name }}
+  - name: Start Node application with PM2
+    shell: |
+      pm2 describe {{ app_name }} || pm2 start app.js --name {{ app_name }}
     args:
       chdir: "{{ project_dir }}"
 
   - name: Save PM2 process list
     command: pm2 save
 
-  - name: Configure nginx
+  - name: Configure Nginx for Node app
     template:
       src: templates/nginx_node.conf.j2
       dest: /etc/nginx/sites-available/{{ app_name }}
+      owner: root
+      group: root
+      mode: "0644"
 
-  - name: Enable nginx site
+  - name: Enable Nginx site
     file:
       src: /etc/nginx/sites-available/{{ app_name }}
       dest: /etc/nginx/sites-enabled/{{ app_name }}
       state: link
 
-  - name: Remove default nginx
+  - name: Remove default Nginx site
     file:
       path: /etc/nginx/sites-enabled/default
       state: absent
 
-  - name: Restart nginx
+  - name: Restart Nginx
     service:
       name: nginx
       state: restarted
