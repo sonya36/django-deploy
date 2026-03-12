@@ -46,7 +46,7 @@
       path: "{{ project_dir }}"
 
   - name: Start Node application
-    command: pm2 start app.js --name {{ app_name }}
+    command: pm2 start app.js --name {{ app_name }} || pm2 restart {{ app_name }}
     args:
       chdir: "{{ project_dir }}"
     ignore_errors: yes
