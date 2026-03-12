@@ -1,0 +1,71 @@
+- hosts: web
+  become: yes
+
+  vars_files:
+    - group_vars/node.yml
+
+  tasks:
+
+  - name: Install system packages
+    apt:
+      name:
+        - git
+        - curl
+        - nginx
+      update_cache: yes
+      state: present
+
+  - name: Install Node runtime
+    shell: |
+      curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+      apt-get install -y nodejs
+    args:
+      executable: /bin/bash
+
+  - name: Install PM2
+    npm:
+      name: pm2
+      global: yes
+
+  - name: Create application directory
+    file:
+      path: "{{ project_dir }}"
+      state: directory
+      owner: ubuntu
+      group: ubuntu
+
+  - name: Pull Node repository
+    git:
+      repo: "{{ repo_url }}"
+      dest: "{{ project_dir }}"
+      version: "{{ branch }}"
+      force: yes
+
+  - name: Install Node dependencies
+    npm:
+      path: "{{ project_dir }}"
+
+  - name: Start Node application
+    command: pm2 start app.js --name {{ app_name }}
+    args:
+      chdir: "{{ project_dir }}"
+    ignore_errors: yes
+
+  - name: Save PM2 configuration
+    command: pm2 save
+
+  - name: Configure nginx
+    template:
+      src: templates/nginx_node.conf.j2
+      dest: /etc/nginx/sites-available/{{ app_name }}
+
+  - name: Enable nginx configuration
+    file:
+      src: /etc/nginx/sites-available/{{ app_name }}
+      dest: /etc/nginx/sites-enabled/{{ app_name }}
+      state: link
+
+  - name: Restart nginx
+    service:
+      name: nginx
+      state: restarted
