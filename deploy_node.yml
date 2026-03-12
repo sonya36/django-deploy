@@ -29,7 +29,7 @@
         name: pm2
         global: yes
 
-    - name: Remove old project directory if it exists and is not a git repo
+    - name: Remove old project directory
       file:
         path: "{{ project_dir }}"
         state: absent
@@ -56,12 +56,14 @@
         path: "{{ project_dir }}"
 
     - name: Start Node application with PM2
+      become_user: ubuntu
       shell: |
-        pm2 describe {{ app_name }} || pm2 start app.js --name {{ app_name }}
+        pm2 start app.js --name {{ app_name }}
       args:
         chdir: "{{ project_dir }}"
 
     - name: Save PM2 process list
+      become_user: ubuntu
       command: pm2 save
 
     - name: Configure Nginx for Node app
