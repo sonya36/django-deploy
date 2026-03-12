@@ -6,13 +6,16 @@
 
   tasks:
 
-  - name: Install system packages
+  - name: Update apt
+    apt:
+      update_cache: yes
+
+  - name: Install dependencies
     apt:
       name:
         - git
         - curl
         - nginx
-      update_cache: yes
       state: present
 
   - name: Install Node runtime
@@ -27,31 +30,28 @@
       name: pm2
       global: yes
 
-  - name: Create application directory
+  - name: Create project directory
     file:
       path: "{{ project_dir }}"
       state: directory
-      owner: ubuntu
-      group: ubuntu
 
-  - name: Pull Node repository
+  - name: Clone repository
     git:
       repo: "{{ repo_url }}"
       dest: "{{ project_dir }}"
       version: "{{ branch }}"
       force: yes
 
-  - name: Install Node dependencies
+  - name: Install node dependencies
     npm:
       path: "{{ project_dir }}"
 
   - name: Start Node application
-    command: pm2 start app.js --name {{ app_name }} || pm2 restart {{ app_name }}
+    shell: pm2 start app.js --name {{ app_name }} || pm2 restart {{ app_name }}
     args:
       chdir: "{{ project_dir }}"
-    ignore_errors: yes
 
-  - name: Save PM2 configuration
+  - name: Save PM2 process list
     command: pm2 save
 
   - name: Configure nginx
@@ -59,11 +59,16 @@
       src: templates/nginx_node.conf.j2
       dest: /etc/nginx/sites-available/{{ app_name }}
 
-  - name: Enable nginx configuration
+  - name: Enable nginx site
     file:
       src: /etc/nginx/sites-available/{{ app_name }}
       dest: /etc/nginx/sites-enabled/{{ app_name }}
       state: link
+
+  - name: Remove default nginx
+    file:
+      path: /etc/nginx/sites-enabled/default
+      state: absent
 
   - name: Restart nginx
     service:
